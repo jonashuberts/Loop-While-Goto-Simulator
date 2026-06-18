@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>LOOP Simulator • Theoretische Informatik</title>
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            orange: {
+              50: '#fff7ed',
+              100: '#ffedd5',
+              200: '#fed7aa',
+              300: '#fdba74',
+              400: '#fb923c',
+              500: '#f97316',
+              600: '#ea580c',
+              700: '#c2410c',
+            },
+            stone: {
+              50: '#fafaf9',
+              100: '#f5f5f4',
+              200: '#e7e5e4',
+              300: '#d6d3d1',
+              400: '#a8a29e',
+              500: '#78716c',
+              600: '#57534e',
+              700: '#44403c',
+              800: '#292524',
+              900: '#1c1917',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            outfit: ['Outfit', 'sans-serif'],
+            mono: ['Fira Code', 'monospace'],
+          }
+        }
+      }
+    }
+  </script>
+  
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-stone-50 text-stone-800 font-sans min-h-screen flex flex-col py-6 px-4 justify-center relative">
+  <!-- Subtle background glow -->
+  <div class="glow-bg absolute top-[-15%] left-1/2 -translate-x-1/2 w-[400px] h-[400px] pointer-events-none z-0"></div>
+  
+  <div class="container max-w-5xl w-full mx-auto flex flex-col gap-4 z-10 my-auto">
+    <!-- Header Section -->
+    <header class="bg-white border border-stone-200/80 rounded-xl p-4 shadow-sm flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-orange-50 border border-orange-200 text-orange-500 flex items-center justify-center font-bold text-base">𝄘</div>
+        <div>
+          <h1 class="font-outfit text-base font-bold tracking-tight text-stone-800">LOOP Simulator</h1>
+          <p class="text-[10px] text-stone-400 mt-0.5">Theoretische Informatik</p>
+        </div>
+      </div>
+      <div>
+        <label for="example-select" class="sr-only">Beispiel laden</label>
+        <select id="example-select" class="bg-white text-stone-700 border border-stone-200 rounded-lg py-1 px-2.5 text-xs font-semibold outline-none focus:border-orange-500 focus:ring-2 focus:ring-orange-500/10 cursor-pointer shadow-sm">
+          <option value="" disabled selected>Beispiel laden...</option>
+          <option value="addition">Addition (x0 := x1 + x2)</option>
+          <option value="multiplication">Multiplikation (x0 := x1 * x2)</option>
+          <option value="exponentiation">Exponentiation (x0 := x1 ^ x2)</option>
+          <option value="predecessor">Vorgänger (x0 := x1 - 1)</option>
+          <option value="conditional">Bedingung (IF x1 > 0 THEN x0 := x2)</option>
+        </select>
+      </div>
+    </header>
+
+    <!-- Main Layout: 2-column grid layout, vertically stretched on desktop for alignment -->
+    <div class="main-layout grid grid-cols-1 lg:grid-cols-12 gap-5 items-stretch">
+      
+      <!-- Left Column: Code Editor -->
+      <div class="left-column lg:col-span-7 flex flex-col h-full">
+        <div class="card bg-white border border-stone-200/80 rounded-xl shadow-sm overflow-hidden flex flex-col h-full flex-grow">
+          
+          <!-- Editor Header with File Name Support & Actions -->
+          <div class="card-header border-b border-stone-200/80 px-4 py-2 flex justify-between items-center bg-stone-50/50">
+            <div class="flex items-center gap-1.5">
+              <label for="filename-input" class="sr-only">Dateiname</label>
+              <input type="text" id="filename-input" class="bg-white text-stone-700 border border-stone-200/80 rounded py-0.5 px-2 text-[10px] font-semibold outline-none focus:border-orange-500 w-28 text-right" placeholder="programm" value="programm">
+              <span class="text-[10px] font-mono text-stone-400 -ml-0.5 select-none">.loop</span>
+            </div>
+            
+            <div class="flex items-center gap-3">
+              <button id="import-btn" class="font-bold text-stone-400 hover:text-orange-500 transition-colors text-[10px] uppercase tracking-wider" title="Code aus einer lokalen Datei importieren">Laden</button>
+              <button id="export-btn" class="font-bold text-stone-400 hover:text-orange-500 transition-colors text-[10px] uppercase tracking-wider" title="Code als .loop Datei speichern">Speichern</button>
+              <span class="w-[1px] h-3 bg-stone-200"></span>
+              <span class="text-[10px] font-semibold text-stone-400 bg-stone-100 border border-stone-200/50 rounded px-1.5 py-0.5 select-none">Tab = Indent</span>
+            </div>
+          </div>
+          
+          <div class="editor-wrapper flex bg-stone-50/10 min-h-[350px] overflow-hidden border-b border-stone-200/80 flex-grow">
+            <div class="line-numbers w-10 py-4 px-2 bg-stone-100/30 border-r border-stone-200/80 text-stone-400 font-mono text-xs line-height-1.6 text-right select-none h-full" id="line-gutter">1</div>
+            <div class="relative flex-grow h-full overflow-hidden">
+              <pre id="highlight-backdrop" class="absolute inset-0 m-0"><code id="highlight-code"></code></pre>
+              <textarea id="code-input" class="absolute inset-0 bg-transparent resize-none outline-none" spellcheck="false" placeholder="// Schreibe dein LOOP-Programm hier..."></textarea>
+            </div>
+          </div>
+          
+          <div class="editor-footer px-4 py-2 bg-stone-50/20 flex justify-between items-center text-[10px] text-stone-400">
+            <span id="char-line-count">Zeilen: 1 | Zeichen: 0</span>
+            <button id="format-btn" class="font-semibold text-stone-500 hover:text-orange-500 transition-colors flex items-center gap-1" title="Code einrücken">✨ Formatieren</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Right Column: Unified Settings, Debugger & Output Panel -->
+      <div class="right-column lg:col-span-5 flex flex-col h-full">
+        <div class="card bg-white border border-stone-200/80 rounded-xl shadow-sm overflow-hidden flex flex-col h-full flex-grow">
+          
+          <!-- Unified Controls Header -->
+          <div class="p-4 bg-stone-50/60 border-b border-stone-200/80">
+            <div class="button-group grid grid-cols-2 gap-2.5">
+              <button id="run-btn" class="bg-orange-500 hover:bg-orange-600 text-white rounded-lg py-2 px-3 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                <span>▶</span> Ausführen
+              </button>
+              <button id="step-mode-btn" class="bg-white hover:bg-stone-50 text-stone-700 border border-stone-200 rounded-lg py-2 px-3 font-bold text-xs transition-colors flex items-center justify-center gap-1.5 shadow-sm">
+                <span>⏯</span> Debugger
+              </button>
+            </div>
+            
+            <!-- Debug Control Overlay -->
+            <div id="debug-controls" class="debug-controls hidden border-t border-stone-200/80 pt-3 mt-3 flex flex-col gap-2">
+              <div class="debug-status flex items-center gap-1.5 text-[10px] font-bold text-orange-600 uppercase tracking-wider">
+                <span class="w-1.5 h-1.5 rounded-full bg-orange-500 animate-pulse"></span> Debug: Zeile <span id="debug-line-num">-</span>
+              </div>
+              <div class="debug-buttons grid grid-cols-3 gap-2">
+                <button id="debug-step-btn" class="bg-amber-500 hover:bg-amber-600 text-white rounded-md py-1.5 px-2.5 text-[10px] font-bold text-center transition-colors">
+                  ➔ Schritt
+                </button>
+                <button id="debug-run-btn" class="bg-emerald-600 hover:bg-emerald-700 text-white rounded-md py-1.5 px-2.5 text-[10px] font-bold text-center transition-colors">
+                  ▶ Weiter
+                </button>
+                <button id="debug-stop-btn" class="bg-rose-600 hover:bg-rose-700 text-white rounded-md py-1.5 px-2.5 text-[10px] font-bold text-center transition-colors">
+                  ⏹ Stop
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tabs Navigation Bar -->
+          <div class="flex border-b border-stone-200/80 bg-stone-50/20 text-xs">
+            <button id="tab-inputs-btn" class="flex-1 py-2.5 text-center font-bold border-b-2 border-orange-500 text-orange-600 outline-none transition-all">
+              Eingabe
+            </button>
+            <button id="tab-outputs-btn" class="flex-1 py-2.5 text-center font-bold border-b-2 border-transparent text-stone-400 hover:text-stone-600 outline-none transition-all">
+              Ausgabe
+            </button>
+            <button id="tab-help-btn" class="flex-1 py-2.5 text-center font-bold border-b-2 border-transparent text-stone-400 hover:text-stone-600 outline-none transition-all">
+              Syntax-Hilfe
+            </button>
+          </div>
+
+          <!-- Tab Contents Area -->
+          <div class="p-4 flex-grow flex flex-col justify-start">
+            
+            <!-- Tab 1: Inputs / Startwerte -->
+            <div id="tab-inputs-content" class="w-full flex flex-col">
+              <p class="text-[10px] text-stone-400 mb-3.5 leading-relaxed">Lege hier die Anfangswerte der im Editor erkannten Variablen fest. Unbekannte Variablen starten automatisch bei <code>0</code>.</p>
+              <div id="initial-vars" class="flex flex-col gap-2">
+                <!-- Dynamically populated -->
+                <div class="empty-vars-message text-center py-5 text-xs italic text-stone-400 bg-stone-50 border border-stone-200/50 rounded-lg">Erstelle Variablen (z.B. <code>x1</code>) im Editor, um Startwerte festzulegen.</div>
+              </div>
+            </div>
+
+            <!-- Tab 2: Outputs / Ergebnisse & Trace (Hidden by default) -->
+            <div id="tab-outputs-content" class="w-full hidden flex flex-col gap-4">
+              <div id="error-output" class="error hidden"></div>
+              
+              <!-- Variables Table -->
+              <div class="flex flex-col gap-1.5">
+                <h3 class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Variablenzustand</h3>
+                <div class="border border-stone-200/80 rounded-lg overflow-hidden">
+                  <table id="result-table" class="w-full text-xs text-left border-collapse bg-white">
+                    <thead>
+                      <tr class="bg-stone-50 border-b border-stone-200 text-stone-400 font-bold text-[10px] uppercase tracking-wider">
+                        <th class="p-2">Variable</th>
+                        <th class="p-2">Wert</th>
+                        <th class="p-2">Typ</th>
+                      </tr>
+                    </thead>
+                    <tbody id="result-body">
+                      <tr><td colspan="3" class="empty-state text-center text-stone-400 italic py-4">Noch nicht ausgeführt.</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- Trace Log -->
+              <div class="flex flex-col gap-1.5">
+                <div class="flex justify-between items-center">
+                  <h3 class="text-[10px] font-bold uppercase tracking-wider text-stone-400">Ausführungsprotokoll</h3>
+                  <button id="clear-trace-btn" class="text-[10px] text-stone-400 hover:text-orange-500 font-semibold transition-colors">Löschen</button>
+                </div>
+                <div class="trace-log-container h-36 overflow-y-auto p-3 bg-stone-50 border border-stone-200/80 rounded-lg flex flex-col gap-2 text-[10px]" id="trace-log">
+                  <div class="trace-empty text-center py-8 text-xs italic text-stone-400 font-sans">Noch keine Ausführungsdaten.</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Tab 3: Syntax Help (Hidden by default) -->
+            <div id="tab-help-content" class="w-full hidden flex flex-col gap-4 text-stone-600">
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <h3 class="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">Zulässige Ausdrücke</h3>
+                  <ul class="flex flex-col gap-1.5 text-xs font-semibold">
+                    <li><code>xi := xj + c</code> <span class="text-[10px] text-stone-400 block pl-1 font-normal">Konstantenaddition</span></li>
+                    <li><code>xi := xj - c</code> <span class="text-[10px] text-stone-400 block pl-1 font-normal">Monus-Subtraktion</span></li>
+                    <li><code>xi := xj</code> <span class="text-[10px] text-stone-400 block pl-1 font-normal">Zuweisung (xj + 0)</span></li>
+                  </ul>
+                </div>
+                <div>
+                  <h3 class="text-[10px] font-bold uppercase tracking-wider text-stone-400 mb-2">Ablaufsteuerung</h3>
+                  <ul class="flex flex-col gap-1.5 text-xs font-semibold">
+                    <li><code>P1; P2</code> <span class="text-[10px] text-stone-400 block pl-1 font-normal">Anweisungssequenz</span></li>
+                    <li><code>LOOP xi DO P END</code> <span class="text-[10px] text-stone-400 block pl-1 font-normal">Wiederhole P genau xi-mal</span></li>
+                  </ul>
+                </div>
+              </div>
+              <div class="p-3.5 bg-orange-50/15 border border-orange-200/40 rounded-lg text-stone-500 leading-relaxed text-xs">
+                <strong>Semantik:</strong> Variablen außer den Eingaben starten bei <code>0</code>. Das Ergebnis steht am Ende in <code>x0</code>. Die modifizierte Subtraktion (Monus) deckelt bei <code>0</code>: <code>x<sub>i</sub> := max(0, x<sub>j</sub> - c)</code>.
+              </div>
+            </div>
+
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+  
+  <footer class="text-center mt-6 mb-2 text-stone-400 text-[10px]">
+    <p>LOOP Simulator • Theoretische Informatik • Definitionen 6.2 - 6.3</p>
+  </footer>
+
+  <!-- Hidden file selector for loading local files -->
+  <input type="file" id="file-input" accept=".loop,.txt" class="hidden">
+
+  <script type="module" src="src/main.js"></script>
+</body>
+</html>

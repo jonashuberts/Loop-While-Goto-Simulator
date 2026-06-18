@@ -1,0 +1,90 @@
+/* Custom style overrides to supplement Tailwind CSS */
+
+/* Exact font-family, size, line-height, padding and margins for overlay highlighting */
+#code-input, #highlight-backdrop, .line-numbers {
+  font-family: 'Fira Code', monospace !important;
+  font-size: 12px !important;
+  line-height: 1.6 !important;
+}
+
+#code-input, #highlight-backdrop {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  box-sizing: border-box !important;
+  padding: 16px !important;
+  margin: 0 !important;
+  border: none !important;
+  tab-size: 2 !important;
+  -moz-tab-size: 2 !important;
+  white-space: pre !important;
+  word-wrap: normal !important;
+  overflow-wrap: normal !important;
+}
+
+#code-input {
+  color: transparent !important;
+  caret-color: #f97316 !important; /* Orange cursor caret */
+  overflow: auto !important;
+  background: transparent !important;
+}
+
+#highlight-backdrop {
+  color: #292524 !important; /* Default fallback color */
+  overflow: hidden !important;
+  pointer-events: none !important;
+}
+
+/* Scroll Sync support */
+.editor-wrapper {
+  position: relative;
+}
+
+.line-numbers {
+  display: block;
+  box-sizing: border-box;
+}
+
+/* Highlighted line in Gutter during Debugging */
+.line-gutter-highlight {
+  color: #f97316 !important;
+  background-color: rgba(249, 115, 22, 0.12) !important;
+  font-weight: 700 !important;
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #e7e5e4;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a29e;
+}
+
+/* Subtle background glow for warm cream tone */
+.glow-bg {
+  background: radial-gradient(circle, rgba(249, 115, 22, 0.05) 0%, rgba(247, 245, 240, 0) 70%);
+  filter: blur(60px);
+}
+
+/* Syntax Highlighting specific styles (fallback/safety for dynamic injection) */
+#highlight-code .text-orange-600 { color: #ea580c !important; }
+#highlight-code .text-amber-600 { color: #d97706 !important; }
+#highlight-code .text-amber-700 { color: #b45309 !important; }
+#highlight-code .text-orange-500 { color: #f97316 !important; }
+#highlight-code .text-stone-400 { color: #a8a29e !important; }
+#highlight-code .font-bold { font-weight: 700 !important; }
+#highlight-code .font-semibold { font-weight: 600 !important; }
+#highlight-code .italic { font-style: italic !important; }
