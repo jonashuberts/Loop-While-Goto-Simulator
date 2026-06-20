@@ -251,7 +251,13 @@ document.addEventListener('DOMContentLoaded', () => {
       
       let indent = '';
       const isCommentLine = /^\s*\/\//.test(currentLine);
-      if (isCommentLine) {
+      
+      const nextLinePos = val.indexOf('\n', start);
+      const endOfLine = nextLinePos === -1 ? val.length : nextLinePos;
+      const restOfLine = val.substring(start, endOfLine);
+      const isAtEndOfLine = restOfLine.trim() === '';
+      
+      if (isCommentLine && !isAtEndOfLine) {
         const match = currentLine.match(/^(\s*\/\/)\s*/);
         if (match) {
           indent = match[1] + ' ';
