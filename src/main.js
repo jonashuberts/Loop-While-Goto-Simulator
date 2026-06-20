@@ -9,6 +9,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const lineGutter = document.getElementById('line-gutter');
   const charLineCount = document.getElementById('char-line-count');
   const formatBtn = document.getElementById('format-btn');
+  const screenshotBtn = document.getElementById('screenshot-btn');
   const exampleSelect = document.getElementById('example-select');
   const programTypeSelect = document.getElementById('program-type-select');
   
@@ -278,6 +279,188 @@ document.addEventListener('DOMContentLoaded', () => {
     updateHighlight();
     localStorage.setItem(`loop_simulator_code_${currentMode}`, codeInput.value);
   });
+
+  screenshotBtn.addEventListener('click', async () => {
+    const code = codeInput.value.trim();
+    if (!code) {
+      const originalText = screenshotBtn.textContent;
+      screenshotBtn.textContent = '⚠️ Kein Code!';
+      screenshotBtn.style.color = '#ef4444';
+      setTimeout(() => {
+        screenshotBtn.textContent = originalText;
+        screenshotBtn.style.color = '';
+      }, 2000);
+      return;
+    }
+
+    const originalText = screenshotBtn.textContent;
+    screenshotBtn.textContent = '⏳ Rendering...';
+    screenshotBtn.disabled = true;
+
+    try {
+      // Create temporary container off-screen
+      const tempDiv = document.createElement('div');
+      tempDiv.style.position = 'absolute';
+      tempDiv.style.left = '-9999px';
+      tempDiv.style.top = '0';
+      tempDiv.style.padding = '48px';
+      tempDiv.style.background = 'linear-gradient(135deg, #ffedd5 0%, #fed7aa 50%, #fafaf9 100%)';
+      tempDiv.style.display = 'inline-block';
+      tempDiv.style.boxSizing = 'border-box';
+
+      // Create window card
+      const card = document.createElement('div');
+      card.style.background = '#ffffff';
+      card.style.borderRadius = '12px';
+      card.style.boxShadow = '0 20px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02)';
+      card.style.border = '1px solid rgba(0, 0, 0, 0.05)';
+      card.style.overflow = 'hidden';
+      card.style.minWidth = '480px';
+      card.style.maxWidth = '900px';
+
+      // Create Header
+      const header = document.createElement('div');
+      header.style.display = 'flex';
+      header.style.alignItems = 'center';
+      header.style.padding = '12px 16px';
+      header.style.borderBottom = '1px solid #f5f5f4';
+      header.style.background = '#fafaf9';
+
+      // MacOS window dots
+      const dots = document.createElement('div');
+      dots.style.display = 'flex';
+      dots.style.gap = '6px';
+
+      const colors = ['#ff5f56', '#ffbd2e', '#27c93f'];
+      colors.forEach(color => {
+        const dot = document.createElement('div');
+        dot.style.width = '10px';
+        dot.style.height = '10px';
+        dot.style.borderRadius = '50%';
+        dot.style.backgroundColor = color;
+        dots.appendChild(dot);
+      });
+      header.appendChild(dots);
+
+      // File Title in Header
+      const title = document.createElement('div');
+      title.style.fontFamily = "'Outfit', 'Inter', sans-serif";
+      title.style.fontSize = '11px';
+      title.style.fontWeight = '600';
+      title.style.color = '#78716c';
+      title.style.margin = '0 auto';
+      title.style.transform = 'translateX(-21px)'; // Offset to center title relative to the window
+
+      const rawName = filenameInput.value.trim();
+      const sanitizedName = rawName.replace(/[^a-zA-Z0-9_\-]/g, '') || 'programm';
+      title.textContent = `${sanitizedName}.${currentMode.toLowerCase()}`;
+      header.appendChild(title);
+      card.appendChild(header);
+
+      // Code Area
+      const codeWrapper = document.createElement('div');
+      codeWrapper.style.padding = '24px';
+      codeWrapper.style.background = '#ffffff';
+
+      const codePre = document.createElement('pre');
+      codePre.style.margin = '0';
+      codePre.style.whiteSpace = 'pre';
+
+      const codeElement = document.createElement('code');
+      codeElement.style.fontFamily = "'Fira Code', monospace";
+      codeElement.style.fontSize = '13px';
+      codeElement.style.lineHeight = '1.6';
+      codeElement.innerHTML = highlightCode(codeInput.value);
+
+      // Explicitly set styles inline for elements to render correctly in html2canvas
+      const elementsToStyle = {
+        'text-orange-600': { color: '#ea580c', fontWeight: 'bold' },
+        'text-amber-600': { color: '#d97706', fontWeight: 'bold' },
+        'text-amber-700': { color: '#b45309', fontWeight: '600' },
+        'text-orange-500': { color: '#f97316', fontWeight: '600' },
+        'text-emerald-600': { color: '#059669', fontWeight: 'bold' },
+        'text-stone-400': { color: '#a8a29e', fontStyle: 'italic' }
+      };
+
+      for (const [cls, styles] of Object.entries(elementsToStyle)) {
+        codeElement.querySelectorAll('.' + cls).forEach(el => {
+          for (const [prop, val] of Object.entries(styles)) {
+            el.style[prop] = val;
+          }
+        });
+      }
+
+      codePre.appendChild(codeElement);
+      codeWrapper.appendChild(codePre);
+      card.appendChild(codeWrapper);
+      tempDiv.appendChild(card);
+
+      document.body.appendChild(tempDiv);
+
+      // Render to Canvas
+      const canvas = await html2canvas(tempDiv, {
+        scale: 2,
+        backgroundColor: null,
+        logging: false,
+        useCORS: true
+      });
+
+      document.body.removeChild(tempDiv);
+
+      // Export blob to Clipboard or Fallback
+      canvas.toBlob(async (blob) => {
+        if (!blob) {
+          downloadScreenshot(canvas, sanitizedName);
+          return;
+        }
+
+        try {
+          const item = new ClipboardItem({ [blob.type]: blob });
+          await navigator.clipboard.write([item]);
+          
+          screenshotBtn.textContent = '✅ Kopiert!';
+          screenshotBtn.style.color = '#10b981';
+        } catch (err) {
+          console.warn('Clipboard writing failed, download fallback:', err);
+          downloadScreenshot(canvas, sanitizedName);
+        } finally {
+          setTimeout(() => {
+            screenshotBtn.textContent = originalText;
+            screenshotBtn.style.color = '';
+            screenshotBtn.disabled = false;
+          }, 2000);
+        }
+      }, 'image/png');
+
+    } catch (err) {
+      console.error('Screenshot creation failed:', err);
+      screenshotBtn.textContent = '❌ Fehler!';
+      screenshotBtn.style.color = '#ef4444';
+      setTimeout(() => {
+        screenshotBtn.textContent = originalText;
+        screenshotBtn.style.color = '';
+        screenshotBtn.disabled = false;
+      }, 2000);
+    }
+  });
+
+  function downloadScreenshot(canvas, name) {
+    try {
+      const link = document.createElement('a');
+      link.download = `${name}.${currentMode.toLowerCase()}.png`;
+      link.href = canvas.toDataURL('image/png');
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      screenshotBtn.textContent = '💾 Heruntergeladen!';
+      screenshotBtn.style.color = '#f59e0b';
+    } catch (err) {
+      console.error('Download fallback failed:', err);
+      screenshotBtn.textContent = '❌ Fehler!';
+      screenshotBtn.style.color = '#ef4444';
+    }
+  }
 
   exampleSelect.addEventListener('change', (e) => {
     const key = e.target.value;
