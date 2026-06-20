@@ -7,32 +7,61 @@ export function handleTabKey(textarea, e) {
     const end = textarea.selectionEnd;
     const val = textarea.value;
 
-    if (start === end) {
-      // Simple 2-space indent
-      textarea.value = val.substring(0, start) + "  " + val.substring(end);
-      textarea.selectionStart = textarea.selectionEnd = start + 2;
-    } else {
-      // Multi-line indent/outdent
-      const lines = val.substring(start, end).split('\n');
-      let newSelectionText = '';
+    // Find the start and end of the lines that contain the selection
+    const lineStart = val.lastIndexOf('\n', start - 1) + 1;
+    let lineEnd = val.indexOf('\n', end);
+    if (lineEnd === -1) {
+      lineEnd = val.length;
+    }
+
+    const selectedText = val.substring(lineStart, lineEnd);
+    const lines = selectedText.split('\n');
+
+    let newSelectionText = '';
+
+    if (!e.shiftKey) {
+      // Indent: add 2 spaces to the beginning of each line
+      newSelectionText = lines.map(line => '  ' + line).join('\n');
+      textarea.value = val.substring(0, lineStart) + newSelectionText + val.substring(lineEnd);
       
-      if (!e.shiftKey) {
-        // Indent
-        newSelectionText = lines.map(line => '  ' + line).join('\n');
-        textarea.value = val.substring(0, start) + newSelectionText + val.substring(end);
-        textarea.selectionStart = start;
-        textarea.selectionEnd = start + newSelectionText.length;
+      // Adjust cursor positions
+      if (start === end) {
+        textarea.selectionStart = textarea.selectionEnd = start + 2;
       } else {
-        // Outdent (Shift+Tab)
-        newSelectionText = lines.map(line => {
-          if (line.startsWith('  ')) return line.substring(2);
-          if (line.startsWith(' ')) return line.substring(1);
-          if (line.startsWith('\t')) return line.substring(1);
-          return line;
-        }).join('\n');
-        textarea.value = val.substring(0, start) + newSelectionText + val.substring(end);
-        textarea.selectionStart = start;
-        textarea.selectionEnd = start + newSelectionText.length;
+        textarea.selectionStart = start + 2;
+        textarea.selectionEnd = end + (lines.length * 2);
+      }
+    } else {
+      // Outdent (Shift+Tab): remove up to 2 spaces or 1 tab from the beginning of each line
+      let firstLineRemovedCount = 0;
+      let totalRemovedCount = 0;
+      
+      newSelectionText = lines.map((line, idx) => {
+        let removed = 0;
+        if (line.startsWith('  ')) {
+          removed = 2;
+        } else if (line.startsWith(' ')) {
+          removed = 1;
+        } else if (line.startsWith('\t')) {
+          removed = 1;
+        }
+        
+        if (idx === 0) {
+          firstLineRemovedCount = removed;
+        }
+        totalRemovedCount += removed;
+        return line.substring(removed);
+      }).join('\n');
+      
+      textarea.value = val.substring(0, lineStart) + newSelectionText + val.substring(lineEnd);
+      
+      // Adjust cursor positions safely
+      if (start === end) {
+        const newCursorPos = Math.max(lineStart, start - firstLineRemovedCount);
+        textarea.selectionStart = textarea.selectionEnd = newCursorPos;
+      } else {
+        textarea.selectionStart = Math.max(lineStart, start - firstLineRemovedCount);
+        textarea.selectionEnd = Math.max(lineStart, end - totalRemovedCount);
       }
     }
   }

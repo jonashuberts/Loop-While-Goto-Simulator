@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const highlightCodeElement = document.getElementById('highlight-code');
   
   const filenameInput = document.getElementById('filename-input');
+  const filenameExtension = document.getElementById('filename-extension');
   const importBtn = document.getElementById('import-btn');
   const exportBtn = document.getElementById('export-btn');
   const fileInput = document.getElementById('file-input');
@@ -135,6 +136,10 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       const defaultExampleKey = Object.keys(EXAMPLES[mode])[0];
       filenameInput.value = defaultExampleKey;
+    }
+    
+    if (filenameExtension) {
+      filenameExtension.textContent = `.${mode.toLowerCase()}`;
     }
     
     updateLineNumbers();
